@@ -44,129 +44,61 @@ EOF
 }
 
 dependency_check() {
-    output "Checking dependencies, this may take a while."
-    if [[ "$lsb_dist" == "ubuntu" ]] || [[ "$lsb_dist" == "debian" ]]; then
-        if ! dpkg --get-selections | grep -q "^mono-complete[[:space:]]*install$" >/dev/null; then
-            output "Mono is not installed, would you like to install it? (y|n)"
-            read -p "" mono_install
-            if [[ "$mono_install" == "y" ]]; then
-	    	if [[ "$lsb_dist" == "ubuntu" ]]; then
-		    if [[ "$dist_version" == "18.04" ]]; then
-		        sudo apt install gnupg ca-certificates > /dev/null 2>&1
-			sudo apt-key adv --keyserver hkp://keyserver.ubuntu.com:80 --recv-keys 3FA7E0328081BFF6A14DA29AA6A19B38D3D831EF > /dev/null 2>&1
-			echo "deb https://download.mono-project.com/repo/ubuntu stable-bionic main" | sudo tee /etc/apt/sources.list.d/mono-official-stable.list
-			sudo apt -y update > /dev/null 2>&1
-		    elif [[ "$dist_version" == "16.04" ]]; then
-		    	sudo apt-key adv --keyserver hkp://keyserver.ubuntu.com:80 --recv-keys 3FA7E0328081BFF6A14DA29AA6A19B38D3D831EF > /dev/null 2>&1
-			sudo apt install apt-transport-https ca-certificates > /dev/null 2>&1
-			echo "deb https://download.mono-project.com/repo/ubuntu stable-xenial main" | sudo tee /etc/apt/sources.list.d/mono-official-stable.list
-			sudo apt -y update > /dev/null 2>&1
-		    else
-		    	warn "Unsupported version, this script only supports Ubuntu 18.04 and ubuntu 16.04."
+    output "Detected $lsb_dist $dist_version, installing all necessary dependencies."
+    if [[ "$lsb_dist" == "ubuntu" ]]; then
+        if [[ "$dist_version" == "18.04" ]]; then
+            apt -y install gnupg ca-certificates
+            apt-key adv --keyserver hkp://keyserver.ubuntu.com:80 --recv-keys 3FA7E0328081BFF6A14DA29AA6A19B38D3D831EF
+            echo "deb https://download.mono-project.com/repo/ubuntu stable-bionic main" | tee /etc/apt/sources.list.d/mono-official-stable.list
+            apt -y update
+        elif [[ "$dist_version" == "16.04" ]]; then
+            apt -y install apt-transport-https ca-certificates
+            apt-key adv --keyserver hkp://keyserver.ubuntu.com:80 --recv-keys 3FA7E0328081BFF6A14DA29AA6A19B38D3D831EF
+            echo "deb https://download.mono-project.com/repo/ubuntu stable-xenial main" | tee /etc/apt/sources.list.d/mono-official-stable.list
+            apt -y update
+		else
+		    warn "Unsupported version, this script only supports Ubuntu 18.04 and ubuntu 16.04."
 			exit 1
-		    fi
 		fi
-		if [[ "$lsb_dist" == "debian" ]]; then
-		    if [[ "$dist_version" == "9" ]]; then
-		    	sudo apt -y install apt-transport-https dirmngr gnupg ca-certificates > /dev/null 2>&1
-			sudo apt-key adv --keyserver hkp://keyserver.ubuntu.com:80 --recv-keys 3FA7E0328081BFF6A14DA29AA6A19B38D3D831EF > /dev/null 2>&1
-			echo "deb https://download.mono-project.com/repo/debian stable-stretch main" | sudo tee /etc/apt/sources.list.d/mono-official-stable.list
-			sudo apt -y update > /dev/null 2>&1
-		    else
-		    	warn "Unsupported version, this script only supports Debian 9."
+		apt -y install mono-complete
+		apt -y install screen
+		apt -y install wget
+    elif [[ "$lsb_dist" == "debian" ]]; then
+        if [[ "$dist_version" == "9" ]]; then
+            apt -y install apt-transport-https dirmngr gnupg ca-certificates
+            apt-key adv --keyserver hkp://keyserver.ubuntu.com:80 --recv-keys 3FA7E0328081BFF6A14DA29AA6A19B38D3D831EF
+            echo "deb https://download.mono-project.com/repo/debian stable-stretch main" | tee /etc/apt/sources.list.d/mono-official-stable.list
+            apt -y update
+		else
+		    warn "Unsupported version, this script only supports Debian 9."
 			exit 1
-		    fi
 		fi
-                output "Installing mono-complete, this may take a while."
-                apt-get -y install mono-complete > /dev/null
-                output "Finished installing mono-complete."
-            else
-                warn "Exiting due to missing dependency: mono-complete"
-                exit 1
-            fi
+		apt -y install mono-complete
+		apt -y install screen
+		apt -y install wget
+    elif [[ "$lsb_dist" == "fedora" ]]; then
+        if [[ "$dist_version" == "29" ]]; then
+            rpm --import "https://keyserver.ubuntu.com/pks/lookup?op=get&search=0x3FA7E0328081BFF6A14DA29AA6A19B38D3D831EF"
+            su -c 'curl https://download.mono-project.com/repo/centos8-stable.repo | tee /etc/yum.repos.d/mono-centos8-stable.repo'
+            dnf -y update
+        else
+            warn "Unsupported version, this script only supports Fedora 29."
+            exit 1
         fi
-        if ! dpkg --get-selections | grep -q "^screen[[:space:]]*install$" >/dev/null; then
-            output "Screen is not installed, would you like to install it? (y|n)"
-            read -p "" screen_install
-            if [[ "$screen_install" == "y" ]]; then
-                output "Installing screen, this may take a while."
-                apt-get -y install screen > /dev/null 2>&1
-                output "Finished installing screen."
-            else
-                warn "Exiting due to missing dependency: screen"
-                exit 1
-            fi
-        fi
-	if ! dpkg --get-selections | grep -q "^wget[[:space:]]*install$" >/dev/null; then
-            output "Wget is not installed, would you like to install it? (y|n)"
-            read -p "" wget_install
-            if [[ "$wget_install" == "y" ]]; then
-                output "Installing wget, this may take a while."
-                apt-get -y install wget > /dev/null 2>&1
-                output "Finished installing wget."
-            else
-                warn "Exiting due to missing dependency: wget"
-                exit 1
-            fi
-        fi
-    elif [[ "$lsb_dist" == "fedora" ]] || [[ "$lsb_dist" == "centos" ]]; then
-        if ! yum list installed "mono-complete" >/dev/null 2>&1; then
-            output "Mono is not installed, would you like to install it? (y|n)"
-            read -p "" mono_install
-            if [[ "$mono_install" == "y" ]]; then
-	    	if [[ "$lsb_dist" == "centos" ]]; then
-	    	    if [[ "$dist_version" == "7" ]]; then
-		        rpm --import "https://keyserver.ubuntu.com/pks/lookup?op=get&search=0x3FA7E0328081BFF6A14DA29AA6A19B38D3D831EF"
-		        su -c 'curl https://download.mono-project.com/repo/centos7-stable.repo | tee /etc/yum.repos.d/mono-centos7-stable.repo'
-		    else
-		        warn "Unsupported version, this script only supports CentOS 7."
-		        exit 1
-		    fi
-	        fi
-                output "Installing mono-complete, this may take a while."
-                if [[ "$lsb_dist" == "centos" ]]; then
-		    yum -y install mono-complete > /dev/null 2>&1
+        dnf -y install mono-devel
+        dnf -y install screen
+        dnf -y install wget
+    elif [[ "$lsb_dist" == "centos" ]]; then
+        if [[ "$dist_version" == "7" ]]; then
+            rpm --import "https://keyserver.ubuntu.com/pks/lookup?op=get&search=0x3FA7E0328081BFF6A14DA29AA6A19B38D3D831EF"
+            su -c 'curl https://download.mono-project.com/repo/centos7-stable.repo | tee /etc/yum.repos.d/mono-centos7-stable.repo'
 		else
-		    dnf -y install mono-complete > /dev/null 2>&1
-                fi
-		output "Finished installing mono-complete."
-            else
-                warn "Exiting due to missing dependency: mono-complete"
-                exit 1
-            fi
-        fi
-        if ! yum list installed "screen" >/dev/null 2>&1; then
-            output "Screen is not installed, would you like to install it? (y|n)"
-            read -p "" screen_install
-            if [[ "$screen_install" == "y" ]]; then
-                output "Installing screen, this may take a while."
-                if [[ "$lsb_dist" == "centos" ]]; then
-		    yum -y install screen > /dev/null 2>&1
-		else
-		    dnf -y install screen > /dev/null 2>&1
-                fi
-                output "Finished installing screen."
-            else
-                warn "Exiting due to missing dependency: screen"
-                exit 1
-            fi
-        fi
-        if ! yum list installed "wget" >/dev/null 2>&1; then
-            output "Wget is not installed, would you like to install it? (y|n)"
-            read -p "" wget_install
-            if [[ "$wget_install" == "y" ]]; then
-                output "Installing wget, this may take a while."
-                if [[ "$lsb_dist" == "centos" ]]; then
-		    yum -y install wget > /dev/null 2>&1
-		else
-		    dnf -y install wget > /dev/null 2>&1
-                fi
-                output "Finished installing wget."
-            else
-                warn "Exiting due to missing dependency: wget"
-                exit 1
-            fi
-        fi
+		    warn "Unsupported version, this script only supports CentOS 7."
+		    exit 1
+		fi
+		yum -y install mono-devel
+		yum -y install screen
+		yum -y install wget
     fi
     output "Dependency check complete."
     output ""
@@ -181,15 +113,9 @@ file_check() {
     fi
     if [[ ! -f "MinecraftClient.exe" ]]; then
         output "Couldn't locate MinecraftClient.exe, would you like to download it? (y|n)"
-        read -p "" download
-        if [[ "$download" == "y" ]]; then
-            output "Downloading latest artifact for MinecraftClient."
-            wget -qO MinecraftClient.exe "https://ci.appveyor.com/api/buildjobs/7tkk3jqmfqm8o9fm/artifacts/MinecraftClient%2Fbin%2FRelease%2FMinecraftClient.exe"
-            output "Finished downloading MinecraftClient."
-        else
-            warn "Exiting due to missing file: MinecraftClient.exe"
-            exit 1
-        fi
+        output "Downloading latest artifact for MinecraftClient."
+        wget -qO MinecraftClient.exe "https://ci.appveyor.com/api/buildjobs/7tkk3jqmfqm8o9fm/artifacts/MinecraftClient%2Fbin%2FRelease%2FMinecraftClient.exe"
+        output "Finished downloading MinecraftClient."
     fi
     export TERM=xterm
     if [[ "$TERM" != "xterm" ]]; then

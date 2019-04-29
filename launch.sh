@@ -5,6 +5,7 @@
 config=alt_config.cfg
 alts=$1
 lsb_dist="$(. /etc/os-release && echo "$ID")"
+dist_version="$(. /etc/os-release && echo "$VERSION_ID")"
 
 output() {
     echo -e '\e[32m'$1'\e[0m';

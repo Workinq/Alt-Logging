@@ -7,11 +7,11 @@ alts=$1
 lsb_dist="$(. /etc/os-release && echo "$ID")"
 dist_version="$(. /etc/os-release && echo "$VERSION_ID")"
 
-output() {
+log() {
     echo -e '\e[32m'$1'\e[0m';
 }
 
-warn() {
+error() {
     echo -e '\e[31m'$1'\e[0m';
 }
 
@@ -24,124 +24,140 @@ credits() {
     info "MCM: https://www.mc-market.org/members/33627/"
     info "Discord: Kieraaaan#6612"
     info "If you need help, PM on one of the above sites."
-    output ""
+    log ""
     config_check
 }
 
 config_check() {
-    output "Checking configuration file."
+    log "Checking configuration file."
     if [[ ! -f "$config" ]]; then
-        warn "Could not find configuration file, creating a new one."
+        error "Could not find configuration file, creating a new one."
         bash -c 'cat > alt_config.cfg' <<-'EOF'
 # This is the speed at which alts will be logged, set to 0 for fast launch.
 logging_speed=5
+# This determines whether or not there should be output when fetching updates or installing dependencies.
+silence_output=false
 EOF
     fi
     source "$config"
-    output "Loaded configuration file."
-    output ""
+    log "Loaded configuration file."
+    log ""
     dependency_check
 }
 
 dependency_check() {
-    output "Detected $lsb_dist $dist_version, installing all necessary dependencies."
-    if [[ "$lsb_dist" == "ubuntu" ]]; then
-        if [[ "$dist_version" == "18.04" ]]; then
-            apt -y install gnupg ca-certificates
-            apt-key adv --keyserver hkp://keyserver.ubuntu.com:80 --recv-keys 3FA7E0328081BFF6A14DA29AA6A19B38D3D831EF
-            echo "deb https://download.mono-project.com/repo/ubuntu stable-bionic main" | tee /etc/apt/sources.list.d/mono-official-stable.list
-            apt -y update
-        elif [[ "$dist_version" == "16.04" ]]; then
-            apt -y install apt-transport-https ca-certificates
-            apt-key adv --keyserver hkp://keyserver.ubuntu.com:80 --recv-keys 3FA7E0328081BFF6A14DA29AA6A19B38D3D831EF
-            echo "deb https://download.mono-project.com/repo/ubuntu stable-xenial main" | tee /etc/apt/sources.list.d/mono-official-stable.list
-            apt -y update
-		else
-		    warn "Unsupported version, this script only supports Ubuntu 18.04 and ubuntu 16.04."
-			exit 1
-		fi
-		apt -y install mono-complete
-		apt -y install screen
-		apt -y install wget
-    elif [[ "$lsb_dist" == "debian" ]]; then
-        if [[ "$dist_version" == "9" ]]; then
-            apt -y install apt-transport-https dirmngr gnupg ca-certificates
-            apt-key adv --keyserver hkp://keyserver.ubuntu.com:80 --recv-keys 3FA7E0328081BFF6A14DA29AA6A19B38D3D831EF
-            echo "deb https://download.mono-project.com/repo/debian stable-stretch main" | tee /etc/apt/sources.list.d/mono-official-stable.list
-            apt -y update
-		else
-		    warn "Unsupported version, this script only supports Debian 9."
-			exit 1
-		fi
-		apt -y install mono-complete
-		apt -y install screen
-		apt -y install wget
-    elif [[ "$lsb_dist" == "fedora" ]]; then
-        if [[ "$dist_version" == "29" ]]; then
-            rpm --import "https://keyserver.ubuntu.com/pks/lookup?op=get&search=0x3FA7E0328081BFF6A14DA29AA6A19B38D3D831EF"
-            su -c 'curl https://download.mono-project.com/repo/centos8-stable.repo | tee /etc/yum.repos.d/mono-centos8-stable.repo'
-            dnf -y update
+    log "Detected $lsb_dist $dist_version."
+    log "Fetching updates and installing all necessary dependencies."
+    if [[ "$lsb_dist" == "ubuntu" ]] || [[ "$lsb_dist" == "debian" ]]; then
+        if [[ "$silence_output" == "true" ]]; then
+            apt -y update >/dev/null 2>&1 && apt -y upgrade >/dev/null 2>&1 && apt -y autoremove >/dev/null 2>&1
+            apt -y install gnupg ca-certificates >/dev/null 2>&1
         else
-            warn "Unsupported version, this script only supports Fedora 29."
-            exit 1
+            apt -y update && apt -y upgrade && apt -y autoremove
+            apt -y install gnupg ca-certificates
         fi
-        dnf -y install mono-devel
-        dnf -y install screen
-        dnf -y install wget
-    elif [[ "$lsb_dist" == "centos" ]]; then
-        if [[ "$dist_version" == "7" ]]; then
-            rpm --import "https://keyserver.ubuntu.com/pks/lookup?op=get&search=0x3FA7E0328081BFF6A14DA29AA6A19B38D3D831EF"
-            su -c 'curl https://download.mono-project.com/repo/centos7-stable.repo | tee /etc/yum.repos.d/mono-centos7-stable.repo'
+        apt-key adv --keyserver hkp://keyserver.ubuntu.com:80 --recv-keys 3FA7E0328081BFF6A14DA29AA6A19B38D3D831EF >/dev/null 2>&1
+        if [[ "$lsb_dist" == "ubuntu" ]]; then
+            if [[ "$dist_version" == "19.04" ]] || [[ "$dist_version" == "18.04" ]]; then
+                echo "deb https://download.mono-project.com/repo/ubuntu stable-bionic main" > /etc/apt/sources.list.d/mono-official-stable.list
+            elif [[ "$dist_version" == "16.04" ]]; then
+                echo "deb https://download.mono-project.com/repo/ubuntu stable-xenial main" > /etc/apt/sources.list.d/mono-official-stable.list
+		    else
+		        error "Unsupported version, this script only supports Ubuntu 19.04, 18.04 and 16.04."
+			    exit 1
+		    fi
 		else
-		    warn "Unsupported version, this script only supports CentOS 7."
-		    exit 1
+		    if [[ "$dist_version" == "9" ]]; then
+		        echo "deb https://download.mono-project.com/repo/debian stable-stretch main" > /etc/apt/sources.list.d/mono-official-stable.list
+		    else
+		        error "Unsupported version, this script only supports Debian 9."
+			    exit 1
+		    fi
 		fi
-		yum -y install mono-devel
-		yum -y install screen
-		yum -y install wget
+		if [[ "$silence_output" == "true" ]]; then
+		    apt -y update >/dev/null 2>&1
+		    apt -y install mono-complete >/dev/null 2>&1
+		    apt -y install screen wget >/dev/null 2>&1
+		else
+		    apt -y update
+		    apt -y install mono-complete
+		    apt -y install screen wget
+		fi
+    elif [[ "$lsb_dist" == "fedora" ]] || [[ "$lsb_dist" == "centos" ]]; then
+        if [[ "$silence_output" == "true" ]]; then
+            yum -y update >/dev/null 2>&1
+        else
+            yum -y update
+        fi
+        rpm --import "https://keyserver.ubuntu.com/pks/lookup?op=get&search=0x3FA7E0328081BFF6A14DA29AA6A19B38D3D831EF" >/dev/null 2>&1
+        if [[ "$lsb_dist" == "fedora" ]]; then
+            if [[ "$dist_version" == "29" ]]; then
+                su -c 'curl https://download.mono-project.com/repo/centos8-stable.repo | tee /etc/yum.repos.d/mono-centos8-stable.repo' >/dev/null 2>&1
+            else
+                error "Unsupported version, this script only supports Fedora 29."
+                exit 1
+            fi
+        elif [[ "$lsb_dist" == "centos" ]]; then
+            if [[ "$dist_version" == "7" ]]; then
+                su -c 'curl https://download.mono-project.com/repo/centos7-stable.repo | tee /etc/yum.repos.d/mono-centos7-stable.repo' >/dev/null 2>&1
+		    else
+		        error "Unsupported version, this script only supports CentOS 7."
+		        exit 1
+		    fi
+        fi
+        if [[ "$silence_output" == "true" ]]; then
+            yum -y update >/dev/null 2>&1
+            yum -y install mono-complete >/dev/null 2>&1
+            yum -y install screen >/dev/null 2>&1
+            yum -y install wget >/dev/null 2>&1
+        else
+            yum -y update
+		    yum -y install mono-complete
+		    yum -y install screen
+		    yum -y install wget
+        fi
     fi
-    output "Dependency check complete."
-    output ""
+    log "Dependency check complete."
+    log ""
     file_check
 }
 
 file_check() {
-    output "Checking for necessary files."
+    log "Checking for necessary files."
     if [[ ! -f "$alts" ]]; then
-        warn "The alt file you specified doesn't exist."
+        error "The alt file you specified doesn't exist."
         exit 1
     fi
     if [[ ! -f "MinecraftClient.exe" ]]; then
-        output "Couldn't locate MinecraftClient.exe, would you like to download it? (y|n)"
-        output "Downloading latest artifact for MinecraftClient."
+        error "Couldn't find MinecraftClient.exe, downloading it now."
         wget -qO MinecraftClient.exe "https://ci.appveyor.com/api/buildjobs/7tkk3jqmfqm8o9fm/artifacts/MinecraftClient%2Fbin%2FRelease%2FMinecraftClient.exe"
-        output "Finished downloading MinecraftClient."
+        log "Finished downloading MinecraftClient."
     fi
     export TERM=xterm
     if [[ "$TERM" != "xterm" ]]; then
-        warn "Failed to set TERM. Search: 'Mono Bug : Magic number is wrong: 542'"
+        error "Failed to set TERM. Search: 'Mono Bug : Magic number is wrong: 542'"
         exit 1
     fi
-    output "Finished file check."
-    output ""
+    log "Finished file check."
+    log ""
     print_info
 }
 
 print_info() {
-    output "Logging speed is: ${logging_speed}s."
-    output ""
+    log "Logging speed is: ${logging_speed}s."
+    log ""
     launch_alts
 }
 
 launch_alts() {
     y=0
     while IFS='' read -r line || [[ -n "$line" ]]; do
-	    output "Starting alt number $y."
+	    log "Starting alt number $y."
 	    cmd="screen -dmS alt$y bash -c 'exec $line; exec bash'"
 	    eval ${cmd}
 	    sleep ${logging_speed}
 	    y=$(( $y + 1 ))
-    done < "$alts" && output "" && post_launch
+    done < "$alts" && log "" && post_launch
 }
 
 post_launch() {
@@ -164,6 +180,6 @@ post_launch() {
     exit 0
 }
 
-[[ $# -eq 0 ]] && { warn "ERROR: You must specify an alt file."; exit 1; }
-output ""
+[[ $# -eq 0 ]] && { error "ERROR: You must specify an alt file."; exit 1; }
+log ""
 credits

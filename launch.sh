@@ -69,14 +69,33 @@ dependency_check() {
                 exit 1
             fi
         fi
-    elif [[ "$lsb_dist" == "fedora" ]]; then
-        if ! yum list installed "mono-devel" >/dev/null 2>&1; then
+    elif [[ "$lsb_dist" == "fedora" ]] || [[ "$lsb_dist" == "centos" ]]; then
+        if ! yum list installed "mono-complete" >/dev/null 2>&1; then
             output "Mono is not installed, would you like to install it? (y|n)"
             read -p "" mono_install
+	    if [[ "$lsb_dist" == "centos" ]]; then
+	    	if [[ "$dist_version" == "8" ]]; then
+		    rpm --import "https://keyserver.ubuntu.com/pks/lookup?op=get&search=0x3FA7E0328081BFF6A14DA29AA6A19B38D3D831EF"
+		    su -c 'curl https://download.mono-project.com/repo/centos8-stable.repo | tee /etc/yum.repos.d/mono-centos8-stable.repo'
+		elif [[ "$dist_version" == "7" ]]; then
+		    rpm --import "https://keyserver.ubuntu.com/pks/lookup?op=get&search=0x3FA7E0328081BFF6A14DA29AA6A19B38D3D831EF"
+		    su -c 'curl https://download.mono-project.com/repo/centos7-stable.repo | tee /etc/yum.repos.d/mono-centos7-stable.repo'
+		elif [[ "$dist_version" == "6" ]]; then
+		    rpm --import "https://keyserver.ubuntu.com/pks/lookup?op=get&search=0x3FA7E0328081BFF6A14DA29AA6A19B38D3D831EF"
+		    su -c 'curl https://download.mono-project.com/repo/centos6-stable.repo | tee /etc/yum.repos.d/mono-centos6-stable.repo'
+		else
+		    warn "Incompatible version, try upgrading to a newer CentOS."
+		    exit 1
+		fi
+	    fi
             if [[ "$mono_install" == "y" ]]; then
                 output "Installing mono-complete, this may take a while."
-                dnf -yq install mono-devel
-                output "Finished installing mono-complete."
+                if [[ "$lsb_dist" == "centos" ]]; then
+		    yum -y install mono-complete &> /dev/null
+		else
+		    dnf -yq install mono-complete
+                fi
+		output "Finished installing mono-complete."
             else
                 warn "Exiting due to missing dependency: mono-complete"
                 exit 1

@@ -44,7 +44,7 @@ EOF
 
 dependency_check() {
     output "Checking dependencies, this may take a while."
-    if [[ "$lsb_dist" == "ubuntu" ]]; then
+    if [[ "$lsb_dist" == "ubuntu" ]] || [[ "$lsb_dist" == "debian" ]]; then
         if ! dpkg --get-selections | grep -q "^mono-complete[[:space:]]*install$" >/dev/null; then
             output "Mono is not installed, would you like to install it? (y|n)"
             read -p "" mono_install
@@ -123,11 +123,7 @@ file_check() {
         read -p "" download
         if [[ "$download" == "y" ]]; then
             output "Downloading latest artifact for MinecraftClient."
-            if [[ "$lsb_dist" == "ubuntu" ]]; then
-                wget -qO MinecraftClient.exe "https://ci.appveyor.com/api/buildjobs/7tkk3jqmfqm8o9fm/artifacts/MinecraftClient%2Fbin%2FRelease%2FMinecraftClient.exe"
-            elif [[ "$lsb_dist" == "fedora" ]]; then
-                wget -qO MinecraftClient.exe "https://ci.appveyor.com/api/buildjobs/7tkk3jqmfqm8o9fm/artifacts/MinecraftClient%2Fbin%2FRelease%2FMinecraftClient.exe"
-            fi
+            wget -qO MinecraftClient.exe "https://ci.appveyor.com/api/buildjobs/7tkk3jqmfqm8o9fm/artifacts/MinecraftClient%2Fbin%2FRelease%2FMinecraftClient.exe"
             output "Finished downloading MinecraftClient."
         else
             warn "Exiting due to missing file: MinecraftClient.exe"

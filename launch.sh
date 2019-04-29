@@ -52,15 +52,15 @@ dependency_check() {
             if [[ "$mono_install" == "y" ]]; then
 	    	if [[ "$lsb_dist" == "ubuntu" ]]; then
 		    if [[ "$dist_version" == "18.04" ]]; then
-		        sudo apt install gnupg ca-certificates
-			sudo apt-key adv --keyserver hkp://keyserver.ubuntu.com:80 --recv-keys 3FA7E0328081BFF6A14DA29AA6A19B38D3D831EF
+		        sudo apt install gnupg ca-certificates > /dev/null 2>&1
+			sudo apt-key adv --keyserver hkp://keyserver.ubuntu.com:80 --recv-keys 3FA7E0328081BFF6A14DA29AA6A19B38D3D831EF > /dev/null 2>&1
 			echo "deb https://download.mono-project.com/repo/ubuntu stable-bionic main" | sudo tee /etc/apt/sources.list.d/mono-official-stable.list
-			sudo apt -y update
+			sudo apt -y update > /dev/null 2>&1
 		    elif [[ "$dist_version" == "16.04" ]]; then
-		    	sudo apt-key adv --keyserver hkp://keyserver.ubuntu.com:80 --recv-keys 3FA7E0328081BFF6A14DA29AA6A19B38D3D831EF
-			sudo apt install apt-transport-https ca-certificates
+		    	sudo apt-key adv --keyserver hkp://keyserver.ubuntu.com:80 --recv-keys 3FA7E0328081BFF6A14DA29AA6A19B38D3D831EF > /dev/null 2>&1
+			sudo apt install apt-transport-https ca-certificates > /dev/null 2>&1
 			echo "deb https://download.mono-project.com/repo/ubuntu stable-xenial main" | sudo tee /etc/apt/sources.list.d/mono-official-stable.list
-			sudo apt -y update
+			sudo apt -y update > /dev/null 2>&1
 		    else
 		    	warn "Unsupported version, this script only supports Ubuntu 18.04 and ubuntu 16.04."
 			exit 1
@@ -68,10 +68,10 @@ dependency_check() {
 		fi
 		if [[ "$lsb_dist" == "debian" ]]; then
 		    if [[ "$dist_version" == "9" ]]; then
-		    	sudo apt -y install apt-transport-https dirmngr gnupg ca-certificates > /dev/null
-			sudo apt-key adv --keyserver hkp://keyserver.ubuntu.com:80 --recv-keys 3FA7E0328081BFF6A14DA29AA6A19B38D3D831EF
+		    	sudo apt -y install apt-transport-https dirmngr gnupg ca-certificates > /dev/null 2>&1
+			sudo apt-key adv --keyserver hkp://keyserver.ubuntu.com:80 --recv-keys 3FA7E0328081BFF6A14DA29AA6A19B38D3D831EF > /dev/null 2>&1
 			echo "deb https://download.mono-project.com/repo/debian stable-stretch main" | sudo tee /etc/apt/sources.list.d/mono-official-stable.list
-			sudo apt -y update > /dev/null
+			sudo apt -y update > /dev/null 2>&1
 		    else
 		    	warn "Unsupported version, this script only supports Debian 9."
 			exit 1
@@ -90,7 +90,7 @@ dependency_check() {
             read -p "" screen_install
             if [[ "$screen_install" == "y" ]]; then
                 output "Installing screen, this may take a while."
-                apt-get -y install screen > /dev/null
+                apt-get -y install screen > /dev/null 2>&1
                 output "Finished installing screen."
             else
                 warn "Exiting due to missing dependency: screen"
@@ -102,7 +102,7 @@ dependency_check() {
             read -p "" wget_install
             if [[ "$wget_install" == "y" ]]; then
                 output "Installing wget, this may take a while."
-                apt-get -y install wget > /dev/null
+                apt-get -y install wget > /dev/null 2>&1
                 output "Finished installing wget."
             else
                 warn "Exiting due to missing dependency: wget"
@@ -125,9 +125,9 @@ dependency_check() {
 	        fi
                 output "Installing mono-complete, this may take a while."
                 if [[ "$lsb_dist" == "centos" ]]; then
-		    yum -y install mono-complete &> /dev/null
+		    yum -y install mono-complete > /dev/null 2>&1
 		else
-		    dnf -yq install mono-complete
+		    dnf -y install mono-complete > /dev/null 2>&1
                 fi
 		output "Finished installing mono-complete."
             else
@@ -141,9 +141,9 @@ dependency_check() {
             if [[ "$screen_install" == "y" ]]; then
                 output "Installing screen, this may take a while."
                 if [[ "$lsb_dist" == "centos" ]]; then
-		    yum -y install screen &> /dev/null
+		    yum -y install screen > /dev/null 2>&1
 		else
-		    dnf -yq install screen
+		    dnf -y install screen > /dev/null 2>&1
                 fi
                 output "Finished installing screen."
             else
@@ -157,9 +157,9 @@ dependency_check() {
             if [[ "$wget_install" == "y" ]]; then
                 output "Installing wget, this may take a while."
                 if [[ "$lsb_dist" == "centos" ]]; then
-		    yum -y install wget &> /dev/null
+		    yum -y install wget > /dev/null 2>&1
 		else
-		    dnf -yq install wget
+		    dnf -y install wget > /dev/null 2>&1
                 fi
                 output "Finished installing wget."
             else

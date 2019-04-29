@@ -66,6 +66,17 @@ dependency_check() {
 			exit 1
 		    fi
 		fi
+		if [[ "$lsb_dist" == "debian" ]]; then
+		    if [[ "$dist_version" == "9" ]]; then
+		    	sudo apt -y install apt-transport-https dirmngr gnupg ca-certificates > /dev/null
+			sudo apt-key adv --keyserver hkp://keyserver.ubuntu.com:80 --recv-keys 3FA7E0328081BFF6A14DA29AA6A19B38D3D831EF
+			echo "deb https://download.mono-project.com/repo/debian stable-stretch main" | sudo tee /etc/apt/sources.list.d/mono-official-stable.list
+			sudo apt -y update > /dev/null
+		    else
+		    	warn "Unsupported version, this script only supports Debian 9."
+			exit 1
+		    fi
+		fi
                 output "Installing mono-complete, this may take a while."
                 apt-get -y install mono-complete > /dev/null
                 output "Finished installing mono-complete."

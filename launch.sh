@@ -39,38 +39,6 @@ EOF
     source "$config"
     output "Loaded configuration file."
     output ""
-    file_check
-}
-
-file_check() {
-    output "Checking for necessary files."
-    if [[ ! -f "$alts" ]]; then
-        warn "The alt file you specified doesn't exist."
-        exit 1
-    fi
-    if [[ ! -f "MinecraftClient.exe" ]]; then
-        output "Couldn't locate MinecraftClient.exe, would you like to download it? (y|n)"
-        read -p "" download
-        if [[ "$download" == "y" ]]; then
-            output "Downloading latest artifact for MinecraftClient."
-            if [[ "$lsb_dist" == "ubuntu" ]]; then
-                wget -qO MinecraftClient.exe "https://ci.appveyor.com/api/buildjobs/7tkk3jqmfqm8o9fm/artifacts/MinecraftClient%2Fbin%2FRelease%2FMinecraftClient.exe"
-            elif [[ "$lsb_dist" == "fedora" ]]; then
-                curl -o MinecraftClient.exe "https://ci.appveyor.com/api/buildjobs/7tkk3jqmfqm8o9fm/artifacts/MinecraftClient%2Fbin%2FRelease%2FMinecraftClient.exe"
-            fi
-            output "Finished downloading MinecraftClient."
-        else
-            warn "Exiting due to missing file: MinecraftClient.exe"
-            exit 1
-        fi
-    fi
-    export TERM=xterm
-    if [[ "$TERM" != "xterm" ]]; then
-        warn "Failed to set TERM. Search: 'Mono Bug : Magic number is wrong: 542'"
-        exit 1
-    fi
-    output "Finished file check."
-    output ""
     dependency_check
 }
 
@@ -140,6 +108,38 @@ dependency_check() {
         fi
     fi
     output "Dependency check complete."
+    output ""
+    file_check
+}
+
+file_check() {
+    output "Checking for necessary files."
+    if [[ ! -f "$alts" ]]; then
+        warn "The alt file you specified doesn't exist."
+        exit 1
+    fi
+    if [[ ! -f "MinecraftClient.exe" ]]; then
+        output "Couldn't locate MinecraftClient.exe, would you like to download it? (y|n)"
+        read -p "" download
+        if [[ "$download" == "y" ]]; then
+            output "Downloading latest artifact for MinecraftClient."
+            if [[ "$lsb_dist" == "ubuntu" ]]; then
+                wget -qO MinecraftClient.exe "https://ci.appveyor.com/api/buildjobs/7tkk3jqmfqm8o9fm/artifacts/MinecraftClient%2Fbin%2FRelease%2FMinecraftClient.exe"
+            elif [[ "$lsb_dist" == "fedora" ]]; then
+                wget -qO MinecraftClient.exe "https://ci.appveyor.com/api/buildjobs/7tkk3jqmfqm8o9fm/artifacts/MinecraftClient%2Fbin%2FRelease%2FMinecraftClient.exe"
+            fi
+            output "Finished downloading MinecraftClient."
+        else
+            warn "Exiting due to missing file: MinecraftClient.exe"
+            exit 1
+        fi
+    fi
+    export TERM=xterm
+    if [[ "$TERM" != "xterm" ]]; then
+        warn "Failed to set TERM. Search: 'Mono Bug : Magic number is wrong: 542'"
+        exit 1
+    fi
+    output "Finished file check."
     output ""
     print_info
 }

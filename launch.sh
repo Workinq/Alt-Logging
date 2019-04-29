@@ -105,7 +105,7 @@ dependency_check() {
         if ! yum list installed "screen" >/dev/null 2>&1; then
             output "Screen is not installed, would you like to install it? (y|n)"
             read -p "" screen_install
-            if [[ "screen_install" == "y" ]]; then
+            if [[ "$screen_install" == "y" ]]; then
                 output "Installing screen, this may take a while."
                 if [[ "$lsb_dist" == "centos" ]]; then
 		    yum -y install screen &> /dev/null
@@ -121,7 +121,7 @@ dependency_check() {
         if ! yum list installed "wget" >/dev/null 2>&1; then
             output "Wget is not installed, would you like to install it? (y|n)"
             read -p "" wget_install
-            if [[ "wget_install" == "y" ]]; then
+            if [[ "$wget_install" == "y" ]]; then
                 output "Installing wget, this may take a while."
                 if [[ "$lsb_dist" == "centos" ]]; then
 		    yum -y install wget &> /dev/null

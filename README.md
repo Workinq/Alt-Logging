@@ -5,4 +5,4 @@ Supported OS':
 * Fedora 29.
 * CentOS 7.
 
-See the wiki **[here](https://github.com/Workinq/Alt-Logging/wiki)**!
+### See the wiki **[here](https://github.com/Workinq/Alt-Logging/wiki)**!
